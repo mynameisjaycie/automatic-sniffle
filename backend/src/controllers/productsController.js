@@ -6,11 +6,18 @@ function listProducts(_req, res) {
 
 /**
  * Get a single product by id.
- * TODO (Assessment Task - Backend 1): Implement this handler to return the product
- * when found, or 404 with { error: 'Product not found' } when the id does not match.
+ * Responds with the product JSON when found; otherwise returns 404 with
+ * `{ error: 'Product not found' }`.
  */
 function getProductById(req, res) {
-  res.status(404).json({ error: 'Product not found' });
+  const { id } = req.params;
+  const product = products.find((item) => item.id === id);
+
+  if (!product) {
+    return res.status(404).json({ error: 'Product not found' });
+  }
+
+  return res.json(product);
 }
 
 module.exports = { listProducts, getProductById };
