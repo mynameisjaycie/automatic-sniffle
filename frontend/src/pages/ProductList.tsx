@@ -9,6 +9,10 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
   currency: 'USD',
 });
 
+/**
+ * Product list page that loads all products and renders
+ * clear loading and error states.
+ */
 export default function ProductList() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -32,7 +36,7 @@ export default function ProductList() {
       }
     }
 
-    loadProducts();
+    void loadProducts();
 
     return () => {
       isActive = false;
