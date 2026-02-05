@@ -1,11 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../api/client';
+import { useCart } from '../state/cartContext';
 import type { Product } from '../types';
-
-type CartItem = {
-  productId: string;
-  quantity: number;
-};
 
 // Keep currency display consistent across the cart.
 const currencyFormatter = new Intl.NumberFormat('en-US', {
@@ -13,18 +9,12 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
   currency: 'USD',
 });
 
-// Seeded items for demo and assessment flow.
-const seededCartItems: CartItem[] = [
-  { productId: 'prod1', quantity: 1 },
-  { productId: 'prod3', quantity: 2 },
-];
-
 /**
- * Cart page that resolves product details for seeded cart items and
+ * Cart page that resolves product details for cart items and
  * displays line totals with a cart summary and a place-order action.
  */
 export default function Cart() {
-  const [cartItems] = useState<CartItem[]>(seededCartItems);
+  const { cartItems } = useCart();
   const [productsById, setProductsById] = useState<Map<string, Product>>(new Map());
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);

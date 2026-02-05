@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { api } from '../api/client';
+import { useCart } from '../state/cartContext';
 import type { Category, Product } from '../types';
 
 // Keep currency display consistent across the list.
@@ -24,6 +25,7 @@ type SortOption = (typeof sortOptions)[number]['value'];
  */
 export default function ProductList() {
   const [searchParams] = useSearchParams();
+  const { addToCart, lastAddedProductId } = useCart();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState('all');
@@ -149,6 +151,15 @@ export default function ProductList() {
                 <li key={product.id}>
                   <Link to={`/products/${product.id}`}>{product.name}</Link>{' '}
                   <span>{currencyFormatter.format(product.price)}</span>
+                  <button
+                    type="button"
+                    onClick={() => addToCart(product.id)}
+                  >
+                    Add to cart
+                  </button>
+                  {lastAddedProductId === product.id && (
+                    <span role="status"> Added to cart.</span>
+                  )}
                 </li>
               ))}
             </ul>

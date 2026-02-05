@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { api } from '../api/client';
+import { useCart } from '../state/cartContext';
 import type { Product } from '../types';
 
 // Keep currency display consistent across the product detail view.
@@ -17,6 +18,7 @@ export default function ProductDetail() {
   const [searchParams] = useSearchParams();
   const { id } = useParams<{ id: string }>();
   const productId = useMemo(() => id?.trim() ?? '', [id]);
+  const { addToCart, lastAddedProductId } = useCart();
   const [product, setProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -78,6 +80,15 @@ export default function ProductDetail() {
           <p>
             <strong>{currencyFormatter.format(product.price)}</strong>
           </p>
+          <button
+            type="button"
+            onClick={() => addToCart(product.id)}
+          >
+            Add to cart
+          </button>
+          {lastAddedProductId === product.id && (
+            <span role="status"> Added to cart.</span>
+          )}
           <p>{product.inStock ? 'In stock' : 'Out of stock'}</p>
           <p>Category: {product.categoryId}</p>
           <p>Tags: {product.tags.join(', ')}</p>

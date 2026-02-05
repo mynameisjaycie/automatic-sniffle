@@ -3,10 +3,11 @@ import ProductList from './pages/ProductList';
 import ProductDetail from './pages/ProductDetail';
 import Cart from './pages/Cart';
 import Home from './pages/Home';
+import { CartProvider } from './state/cartContext';
 
 export default function App() {
   return (
-    <>
+    <CartProvider>
       <header style={headerStyle}>
         <Link to="/" style={logoStyle}>DecryptCode Shop</Link>
         <nav style={navStyle}>
@@ -23,7 +24,7 @@ export default function App() {
           <Route path="/cart" element={<Cart />} />
         </Routes>
       </main>
-    </>
+    </CartProvider>
   );
 }
 
