@@ -1,7 +1,5 @@
 # Frontend Checklist
 
-This checklist covers every frontend requirement from `ASSESSMENT.md`.
-
 ## Product List Page (`/products`)
 
 1. [X] Fetches products from `GET /api/products` on load.
