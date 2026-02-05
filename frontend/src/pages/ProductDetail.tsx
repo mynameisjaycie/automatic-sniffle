@@ -31,6 +31,7 @@ export default function ProductDetail() {
       }
 
       try {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
         const fetchedProduct = await api.getProduct(productId);
         if (!isActive) return;
         setProduct(fetchedProduct);

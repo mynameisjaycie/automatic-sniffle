@@ -36,6 +36,7 @@ export default function ProductList() {
     // Fetch both products and categories for filtering and display.
     async function loadProductData() {
       try {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
         const [fetchedProducts, fetchedCategories] = await Promise.all([
           api.getProducts(),
           api.getCategories(),

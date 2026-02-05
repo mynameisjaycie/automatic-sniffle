@@ -37,6 +37,7 @@ export default function Cart() {
     // Fetch product details needed to render cart line items.
     async function loadProducts() {
       try {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
         const products = await api.getProducts();
         if (!isActive) return;
         const productMap = new Map(products.map((product) => [product.id, product]));
