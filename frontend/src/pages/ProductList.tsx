@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { api } from '../api/client';
 import type { Category, Product } from '../types';
 
@@ -23,12 +23,15 @@ type SortOption = (typeof sortOptions)[number]['value'];
  * clear loading and error states.
  */
 export default function ProductList() {
+  const [searchParams] = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState('all');
   const [selectedSortOption, setSelectedSortOption] = useState<SortOption>('featured');
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const shouldSimulateFailure =
+    import.meta.env.DEV && searchParams.get('fail') === 'true';
 
   useEffect(() => {
     let isActive = true;
@@ -37,6 +40,9 @@ export default function ProductList() {
     async function loadProductData() {
       try {
         await new Promise((resolve) => setTimeout(resolve, 2000));
+        if (shouldSimulateFailure) {
+          throw new Error('Simulated request failure.');
+        }
         const [fetchedProducts, fetchedCategories] = await Promise.all([
           api.getProducts(),
           api.getCategories(),
@@ -59,7 +65,7 @@ export default function ProductList() {
     return () => {
       isActive = false;
     };
-  }, []);
+  }, [shouldSimulateFailure]);
 
   // Derive the visible list based on category and sort selection.
   const filteredAndSortedProducts = useMemo(() => {
