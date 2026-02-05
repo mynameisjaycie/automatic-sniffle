@@ -1,18 +1,81 @@
-import { useParams } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import { api } from '../api/client';
+import type { Product } from '../types';
+
+// Keep currency display consistent across the product detail view.
+const currencyFormatter = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+});
 
 /**
- * TODO (Assessment Task - Frontend 2): Implement the product detail page.
- * - Fetch the single product by id from the API (GET /api/products/:id) using the route param.
- * - Show loading state while fetching.
- * - Show error state if the request fails or product is not found (404).
- * - Display the product name, description, price, and any other relevant fields.
+ * Product detail page that loads a single product by id and renders
+ * clear loading and error states.
  */
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
+  const productId = useMemo(() => id?.trim() ?? '', [id]);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isActive = true;
+
+    async function loadProduct() {
+      if (!productId) {
+        setErrorMessage('Product not found.');
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const fetchedProduct = await api.getProduct(productId);
+        if (!isActive) return;
+        setProduct(fetchedProduct);
+        setErrorMessage(null);
+      } catch (error) {
+        if (!isActive) return;
+        const message = error instanceof Error ? error.message : 'Unable to load product.';
+        setErrorMessage(message);
+      } finally {
+        if (isActive) setIsLoading(false);
+      }
+    }
+
+    void loadProduct();
+
+    return () => {
+      isActive = false;
+    };
+  }, [productId]);
+
   return (
     <div>
       <h1>Product Detail</h1>
-      <p>Implement: fetch product {id} from /api/products/:id, loading/error states, and display details.</p>
+
+      {isLoading && <p>Loading product...</p>}
+
+      {!isLoading && errorMessage && (
+        <div role="alert">
+          <p>Error: {errorMessage}</p>
+          <Link to="/products">Back to products</Link>
+        </div>
+      )}
+
+      {!isLoading && !errorMessage && product && (
+        <section>
+          <h2>{product.name}</h2>
+          <p>{product.description}</p>
+          <p>
+            <strong>{currencyFormatter.format(product.price)}</strong>
+          </p>
+          <p>{product.inStock ? 'In stock' : 'Out of stock'}</p>
+          <p>Category: {product.categoryId}</p>
+          <p>Tags: {product.tags.join(', ')}</p>
+        </section>
+      )}
     </div>
   );
 }
