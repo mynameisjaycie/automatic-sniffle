@@ -10,7 +10,6 @@ This repository contains my submission for the DecryptCode Senior Full-Stack Eng
 - [What Was Requested](#what-was-requested)
 - [Quick Start](#quick-start)
 - [Technologies](#technologies)
-- [Approach](#approach)
 - [Notes](#notes)
 
 ## Overview
