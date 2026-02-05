@@ -94,11 +94,24 @@ export default function ProductList() {
       {!isLoading && errorMessage && (
         <p role="alert">Error: {errorMessage}</p>
       )}
-
+      
       {!isLoading && !errorMessage && (
         <>
+          {import.meta.env.DEV && (
+            <section>
+              <p>Developer Tools</p>
+              <menu>
+                <li>
+                  <Link to="/products/prod1?fail=true">
+                    Simulate product detail failure
+                  </Link>
+                </li>
+              </menu>
+            </section>
+          )}
+          
           <section>
-            <label htmlFor="category-filter">Category</label>
+            <label htmlFor="category-filter">Category: </label>
             <select
               id="category-filter"
               value={selectedCategoryId}
@@ -114,7 +127,7 @@ export default function ProductList() {
           </section>
 
           <section>
-            <label htmlFor="sort-filter">Sort by</label>
+            <label htmlFor="sort-filter">Sort by: </label>
             <select
               id="sort-filter"
               value={selectedSortOption}
@@ -127,7 +140,7 @@ export default function ProductList() {
               ))}
             </select>
           </section>
-
+          
           {filteredAndSortedProducts.length === 0 ? (
             <p>No products match this selection.</p>
           ) : (

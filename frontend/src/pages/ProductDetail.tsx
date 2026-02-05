@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { api } from '../api/client';
 import type { Product } from '../types';
 
@@ -14,11 +14,14 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
  * clear loading and error states.
  */
 export default function ProductDetail() {
+  const [searchParams] = useSearchParams();
   const { id } = useParams<{ id: string }>();
   const productId = useMemo(() => id?.trim() ?? '', [id]);
   const [product, setProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const shouldSimulateFailure =
+    import.meta.env.DEV && searchParams.get('fail') === 'true';
 
   useEffect(() => {
     let isActive = true;
@@ -32,6 +35,9 @@ export default function ProductDetail() {
 
       try {
         await new Promise((resolve) => setTimeout(resolve, 2000));
+        if (shouldSimulateFailure) {
+          throw new Error('Simulated request failure.');
+        }
         const fetchedProduct = await api.getProduct(productId);
         if (!isActive) return;
         setProduct(fetchedProduct);
@@ -50,7 +56,7 @@ export default function ProductDetail() {
     return () => {
       isActive = false;
     };
-  }, [productId]);
+  }, [productId, shouldSimulateFailure]);
 
   return (
     <div>
