@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
-import type { Product } from '../types';
+import type { Category, Product } from '../types';
 
 // Keep currency display consistent across the list.
 const currencyFormatter = new Intl.NumberFormat('en-US', {
@@ -9,23 +9,40 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
   currency: 'USD',
 });
 
+// Provide explicit sort labels used by the UI dropdown.
+const sortOptions = [
+  { label: 'Featured', value: 'featured' },
+  { label: 'Price: Low to High', value: 'price-asc' },
+  { label: 'Price: High to Low', value: 'price-desc' },
+] as const;
+
+type SortOption = (typeof sortOptions)[number]['value'];
+
 /**
  * Product list page that loads all products and renders
  * clear loading and error states.
  */
 export default function ProductList() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState('all');
+  const [selectedSortOption, setSelectedSortOption] = useState<SortOption>('featured');
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     let isActive = true;
 
-    async function loadProducts() {
+    // Fetch both products and categories for filtering and display.
+    async function loadProductData() {
       try {
-        const fetchedProducts = await api.getProducts();
+        const [fetchedProducts, fetchedCategories] = await Promise.all([
+          api.getProducts(),
+          api.getCategories(),
+        ]);
         if (!isActive) return;
         setProducts(fetchedProducts);
+        setCategories(fetchedCategories);
         setErrorMessage(null);
       } catch (error) {
         if (!isActive) return;
@@ -36,12 +53,30 @@ export default function ProductList() {
       }
     }
 
-    void loadProducts();
+    void loadProductData();
 
     return () => {
       isActive = false;
     };
   }, []);
+
+  // Derive the visible list based on category and sort selection.
+  const filteredAndSortedProducts = useMemo(() => {
+    const visibleProducts =
+      selectedCategoryId === 'all'
+        ? products
+        : products.filter((product) => product.categoryId === selectedCategoryId);
+
+    if (selectedSortOption === 'price-asc') {
+      return [...visibleProducts].sort((a, b) => a.price - b.price);
+    }
+
+    if (selectedSortOption === 'price-desc') {
+      return [...visibleProducts].sort((a, b) => b.price - a.price);
+    }
+
+    return visibleProducts;
+  }, [products, selectedCategoryId, selectedSortOption]);
 
   return (
     <div>
@@ -54,14 +89,51 @@ export default function ProductList() {
       )}
 
       {!isLoading && !errorMessage && (
-        <ul>
-          {products.map((product) => (
-            <li key={product.id}>
-              <Link to={`/products/${product.id}`}>{product.name}</Link>{' '}
-              <span>{currencyFormatter.format(product.price)}</span>
-            </li>
-          ))}
-        </ul>
+        <>
+          <section>
+            <label htmlFor="category-filter">Category</label>
+            <select
+              id="category-filter"
+              value={selectedCategoryId}
+              onChange={(event) => setSelectedCategoryId(event.target.value)}
+            >
+              <option value="all">All categories</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </section>
+
+          <section>
+            <label htmlFor="sort-filter">Sort by</label>
+            <select
+              id="sort-filter"
+              value={selectedSortOption}
+              onChange={(event) => setSelectedSortOption(event.target.value as SortOption)}
+            >
+              {sortOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </section>
+
+          {filteredAndSortedProducts.length === 0 ? (
+            <p>No products match this selection.</p>
+          ) : (
+            <ul>
+              {filteredAndSortedProducts.map((product) => (
+                <li key={product.id}>
+                  <Link to={`/products/${product.id}`}>{product.name}</Link>{' '}
+                  <span>{currencyFormatter.format(product.price)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
       )}
     </div>
   );
