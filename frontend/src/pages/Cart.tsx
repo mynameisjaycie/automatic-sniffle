@@ -71,17 +71,19 @@ export default function Cart() {
   }, [lineItems]);
 
   // Send the order to the backend and report success or failure.
-  async function handlePlaceOrder() {
+  async function handlePlaceOrder(shouldSimulateFailure = false) {
     setIsPlacingOrder(true);
     setOrderStatusMessage(null);
 
     try {
-      const orderPayload = {
-        items: cartItems.map((cartItem) => ({
-          productId: cartItem.productId,
-          quantity: cartItem.quantity,
-        })),
-      };
+      const orderPayload = shouldSimulateFailure
+        ? { items: [{ productId: '', quantity: 0 }] }
+        : {
+            items: cartItems.map((cartItem) => ({
+              productId: cartItem.productId,
+              quantity: cartItem.quantity,
+            })),
+          };
 
       await api.createOrder(orderPayload);
       setOrderStatusMessage('Order placed successfully.');
@@ -126,6 +128,15 @@ export default function Cart() {
               <button type="button" onClick={() => void handlePlaceOrder()} disabled={isPlacingOrder}>
                 {isPlacingOrder ? 'Placing order...' : 'Place order'}
               </button>
+              {import.meta.env.DEV && (
+                <button
+                  type="button"
+                  onClick={() => void handlePlaceOrder(true)}
+                  disabled={isPlacingOrder}
+                >
+                  {isPlacingOrder ? 'Placing order...' : 'Place order (simulate failure)'}
+                </button>
+              )}
               {orderStatusMessage && (
                 <p role="status">{orderStatusMessage}</p>
               )}

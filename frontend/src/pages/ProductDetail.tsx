@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import { api } from '../api/client';
 import { useCart } from '../state/cartContext';
 import type { Product } from '../types';
@@ -15,15 +15,20 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
  * clear loading and error states.
  */
 export default function ProductDetail() {
-  const [searchParams] = useSearchParams();
+  const location = useLocation();
   const { id } = useParams<{ id: string }>();
   const productId = useMemo(() => id?.trim() ?? '', [id]);
   const { addToCart, lastAddedProductId } = useCart();
   const [product, setProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const shouldSimulateFailure =
-    import.meta.env.DEV && searchParams.get('fail') === 'true';
+  const [shouldSimulateFailure, setShouldSimulateFailure] = useState(false);
+
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    const state = location.state as { simulateFailure?: boolean } | null;
+    setShouldSimulateFailure(Boolean(state?.simulateFailure));
+  }, [location.state]);
 
   useEffect(() => {
     let isActive = true;
@@ -37,10 +42,10 @@ export default function ProductDetail() {
 
       try {
         await new Promise((resolve) => setTimeout(resolve, 2000));
-        if (shouldSimulateFailure) {
-          throw new Error('Simulated request failure.');
-        }
-        const fetchedProduct = await api.getProduct(productId);
+        const requestedProductId = shouldSimulateFailure
+          ? 'does-not-exist'
+          : productId;
+        const fetchedProduct = await api.getProduct(requestedProductId);
         if (!isActive) return;
         setProduct(fetchedProduct);
         setErrorMessage(null);

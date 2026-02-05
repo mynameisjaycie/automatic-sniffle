@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { api } from '../api/client';
 import { useCart } from '../state/cartContext';
 import type { Category, Product } from '../types';
@@ -24,7 +24,7 @@ type SortOption = (typeof sortOptions)[number]['value'];
  * clear loading and error states.
  */
 export default function ProductList() {
-  const [searchParams] = useSearchParams();
+  const location = useLocation();
   const { addToCart, lastAddedProductId } = useCart();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -32,8 +32,13 @@ export default function ProductList() {
   const [selectedSortOption, setSelectedSortOption] = useState<SortOption>('featured');
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const shouldSimulateFailure =
-    import.meta.env.DEV && searchParams.get('fail') === 'true';
+  const [shouldSimulateFailure, setShouldSimulateFailure] = useState(false);
+
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    const state = location.state as { simulateFailure?: boolean } | null;
+    setShouldSimulateFailure(Boolean(state?.simulateFailure));
+  }, [location.state]);
 
   useEffect(() => {
     let isActive = true;
@@ -43,7 +48,7 @@ export default function ProductList() {
       try {
         await new Promise((resolve) => setTimeout(resolve, 2000));
         if (shouldSimulateFailure) {
-          throw new Error('Simulated request failure.');
+          await api.getProduct('does-not-exist');
         }
         const [fetchedProducts, fetchedCategories] = await Promise.all([
           api.getProducts(),
@@ -104,8 +109,18 @@ export default function ProductList() {
               <p>Developer Tools</p>
               <menu>
                 <li>
-                  <Link to="/products/prod1?fail=true">
+                  <Link to="/products" state={{ simulateFailure: true }}>
+                    Simulate product list failure
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/products/prod1" state={{ simulateFailure: true }}>
                     Simulate product detail failure
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/products" state={{ simulateFailure: false }}>
+                    Clear simulated failures
                   </Link>
                 </li>
               </menu>
